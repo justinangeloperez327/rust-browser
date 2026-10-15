@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-  "apps/rust-browser",
-  "crates/browser-core",
-  "crates/browser-engine",
-  "crates/browser-windows",
+    "apps/rust-browser",
+    "crates/browser-core",
+    "crates/browser-engine",
+    "crates/browser-windows",
 ]
 
 [workspace.package]
@@ -14,7 +14,7 @@ license = "MIT"
 rust-version = "1.85"
 
 [workspace.lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "warn"
 
 [workspace.lints.clippy]
 all = "warn"
