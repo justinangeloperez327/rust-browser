@@ -5,8 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-webview2-com = "0.39"
-windows = { version = "0.61", features = ["Win32_Foundation"] }
+windows-webview = { version = "0.100", features = ["system"] }
 
 [lints]
 workspace = true

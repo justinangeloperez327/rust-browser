@@ -8,6 +8,7 @@ license.workspace = true
 browser-core = { path = "../../crates/browser-core" }
 browser-engine = { path = "../../crates/browser-engine" }
 browser-windows = { path = "../../crates/browser-windows" }
+engine-webview2 = { path = "../../crates/engine-webview2" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 

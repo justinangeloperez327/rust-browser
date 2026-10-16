@@ -2,28 +2,24 @@
 
 ## Scope
 
-Windows 11 x64 browser with Rust native shell, WebView2 engine, and an engine-neutral application core. Servo remains an optional experiment after v1.
+Windows 11 x64 browser built in Rust using a native Windows host, WebView2 rendering, and a future engine-neutral interface for Servo experimentation.
 
 ## Dependency direction
 
-- `apps/rust-browser` wires modules and owns startup/shutdown.
-- `browser-core` owns application state and commands; must not expose COM.
-- `browser-engine` defines engine-neutral types (Group 1), capabilities, events, and traits (Group 4).
-- `browser-windows` isolates native Windows interactions; actual HWND/UI thread is Group 2.
-- `engine-webview2` (Group 3) owns COM objects, controllers and registered event handlers.
+- `apps/rust-browser`: startup, logging and application wiring.
+- `browser-core`: engine-independent application state.
+- `browser-engine`: engine-neutral data types; capability-based interfaces planned in Group 4.
+- `engine-webview2`: native hosted rendering via `windows-webview`.
+- `browser-windows`: original lower-level Win32 window bootstrap; currently not used by main.
 
-## Runtime constraints
+## Native lifecycle
 
-WebView2 controllers are bound to the UI thread's message pump. Async tasks must dispatch UI operations rather than moving COM objects to Tokio worker threads. Share WebView2 environments only for compatible user-data folders/profile settings. Record browser subprocess resource use in benchmarks.
+For the first single-view prototype, `WebViewWindow::run` owns the parent native window, STA COM apartment, WebView2 controller, resize handling, UI message loop and shutdown. Avoid mixing this convenience loop with the custom Win32 message loop. Group 4 will consolidate the host boundary and introduce a typed capability model.
+
+## Future resource management
+
+Tabs: created, active, background, suspended, discarded, closed. Avoid discarding active media, uploads or unsaved work. Measure the entire process tree rather than only the Rust executable.
 
 ## Security
 
-Preserve WebView2 sandbox and runtime servicing. Gate permissions and external URL schemes, isolate private profiles, and treat all web content as untrusted.
-
-## Resource lifecycle
-
-Tab states: created, active, background, suspended, discarded and closed. Eligible tabs can suspend; discarding releases their engine view and requires restoration. Protect audio, calls, uploads, forms and permission prompts. Never present inferred tab savings as measured values.
-
-## Non-goals for Group 1
-
-No web rendering, native window, runtime performance claims, browser permissions, or persistent browsing profiles.
+Do not disable the WebView2 sandbox. Treat all page content as untrusted. Explicit browser permissions, privacy profiles, safe download handling and external scheme controls remain outstanding tasks.

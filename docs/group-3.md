@@ -1,21 +1,28 @@
-# Group 3 — WebView2 integration
+# Group 3 — WebView2 hosting
 
-## Status
+## Implementation
 
-Adapter crate and dependency isolation initialized. Actual COM environment/controller creation, host resizing, navigation, event registration and cleanup are **not yet implemented**. Do not treat the current application as a web browser.
+The application now calls `engine_webview2::run()`. On Windows, this starts a native window through the official `windows-webview` system host and navigates to `https://example.com`. The host owns COM initialization, the window, message loop, WebView2 environment/controller, resize handling, and normal cleanup.
 
-## Implementation sequence
+This is intentionally an initial single-window implementation. The custom Win32 window from Group 2 remains isolated in `browser-windows` but is no longer called by the entry point. Group 4 will establish a common host abstraction and unify window lifecycle, avoiding competing native windows/message loops.
 
-1. Ensure the Win32 UI thread initializes a single-threaded COM apartment before creating WebView2.
-2. Create a profile-specific WebView2 user-data folder under LocalAppData.
-3. Initialize CoreWebView2Environment asynchronously and keep its completion handler alive.
-4. Create CoreWebView2Controller targeting the native HWND, then obtain CoreWebView2.
-5. Set controller bounds on WM_SIZE / WM_DPICHANGED; use client coordinates.
-6. Navigate to a fixed HTTPS start page after controller initialization.
-7. Handle initialization failures, renderer crashes and window destruction.
-8. Remove event tokens and close controller before COM teardown; never block the UI thread awaiting the completion callback.
-9. Add functional Windows smoke tests; confirm the renderer process exits after closing the host.
+The first page loads using WebView2 Chromium rendering if the runtime is installed. On missing runtime or initialization failure, startup returns an error.
 
-## Verification
+## Tested by CI
 
-CI must pass formatting, clippy, tests and release compilation. An interactive Windows smoke test is additionally required for real rendering functionality.
+Formatting, Clippy, tests and release compilation on a Windows runner.
+
+## Manual Windows smoke test
+
+1. Confirm the Microsoft Edge WebView2 Evergreen Runtime is installed.
+2. Run `cargo run -p rust-browser`.
+3. Confirm a native RustBrowser window opens and `https://example.com` renders.
+4. Resize, minimize, maximize and restore.
+5. Close the window and check there are no orphan RustBrowser-owned WebView2 processes.
+6. Relaunch and confirm the start page loads again.
+
+**Manual renderer tests and GPU/RAM benchmarking have not yet been performed.**
+
+## Deferred
+
+Address bar, tab management, history, explicit profile directories, environment sharing, and recoverable process-failure events are future groups. This prototype must not be described as a complete browser.

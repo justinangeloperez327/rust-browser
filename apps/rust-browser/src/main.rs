@@ -1,5 +1,5 @@
 use browser_core::BrowserApplication;
-use browser_windows::{PlatformInfo, run_native_window};
+use browser_windows::PlatformInfo;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
@@ -15,8 +15,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!(
         app = app.name(),
         platform = platform.name(),
-        "RustBrowser bootstrap"
+        "RustBrowser starting"
     );
-    run_native_window()?;
+    engine_webview2::run().map_err(|err| format!("WebView2 hosting failed: {err}"))?;
     Ok(())
 }
