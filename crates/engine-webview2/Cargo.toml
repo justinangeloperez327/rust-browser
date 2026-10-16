@@ -1,0 +1,12 @@
+[package]
+name = "engine-webview2"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows = { version = "0.61", features = ["Win32_Foundation"] }
+
+[lints]
+workspace = true

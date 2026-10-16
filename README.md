@@ -1,20 +1,22 @@
 # RustBrowser
 
-A Windows-native browser written in Rust, using Microsoft Edge WebView2 for web rendering. Engine interfaces will allow future experimentation with Servo.
+RustBrowser is a Windows-native browser project written in Rust, targeting WebView2 rendering with an engine-neutral core for eventual Servo experimentation.
 
-## Status
+## Current status
 
-Group 1: workspace foundation. No browsing or WebView2 integration yet.
+Group 2 native window foundation committed. Group 3 WebView2 adapter crate is initialized, **but the application does not host the web renderer yet**.
 
 ## Requirements
 
 - Windows 11 x64
-- Rust stable MSVC toolchain (`rustup default stable-x86_64-pc-windows-msvc`)
-- Visual Studio C++ build tools / Windows SDK
+- Rust stable MSVC toolchain
+- Visual Studio C++ build tools and Windows SDK
+- Microsoft Edge WebView2 Evergreen Runtime (needed when rendering is integrated)
 
-## Commands
+## Development
 
 ```powershell
+cargo fmt --all
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
@@ -22,4 +24,4 @@ cargo build --workspace --release
 cargo run -p rust-browser
 ```
 
-See `docs/architecture.md` and `docs/roadmap.md` for the design and implementation plan.
+Read `docs/architecture.md`, `docs/roadmap.md`, and `docs/group-3.md`.
