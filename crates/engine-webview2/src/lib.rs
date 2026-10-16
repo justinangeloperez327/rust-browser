@@ -114,13 +114,17 @@ mod tests {
         assert!(!engine.capabilities().suspension);
         assert!(!engine.capabilities().reload);
     }
+
     #[test]
     fn dispatches_navigation_target() {
         let mut received = String::new();
-        let result = dispatch_navigation(BrowserCommand::Navigate(" https://example.com ".into()), |url| {
-            received = url.to_owned();
-            Ok::<_, &'static str>(())
-        });
+        let result = dispatch_navigation(
+            BrowserCommand::Navigate(" https://example.com ".into()),
+            |url| {
+                received = url.to_owned();
+                Ok::<_, &'static str>(())
+            },
+        );
         assert_eq!(result, Ok(()));
         assert_eq!(received, "https://example.com");
     }
@@ -135,5 +139,4 @@ mod tests {
         assert_eq!(result, Err(NavigationDispatchError::Unsupported));
         assert!(!called);
     }
-
 }
