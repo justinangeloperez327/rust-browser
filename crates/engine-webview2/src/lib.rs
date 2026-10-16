@@ -37,7 +37,26 @@ pub fn run() -> windows_webview::Result<()> {
     WebViewWindow::new("RustBrowser")
         .size(1200, 800)
         .run(|host| {
-            host.webview().navigate(START_PAGE)?;
+            let webview = host.webview();
+            let completed_view = webview.clone();
+            let registrations = vec![
+                webview.on_navigation_completed(move |args| {
+                    let event = browser_engine::BrowserEvent::NavigationCompleted {
+                        url: completed_view.source(),
+                        success: args.is_success(),
+                    };
+                    tracing::info!(?event, "WebView2 navigation completed");
+                })?,
+                webview.on_document_title_changed(|title| {
+                    let event = browser_engine::BrowserEvent::TitleChanged(title.to_owned());
+                    tracing::info!(?event, "WebView2 title changed");
+                })?,
+                webview.on_process_failed(|args| {
+                    tracing::error!(kind = ?args.kind(), "WebView2 process failure");
+                })?,
+            ];
+            host.retain_all(registrations);
+            webview.navigate(START_PAGE)?;
             Ok(())
         })
 }
