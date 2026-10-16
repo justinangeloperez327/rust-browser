@@ -1,6 +1,6 @@
 //! Windows-native WebView2 host, isolated from engine-neutral domain types.
 
-use browser_engine::{BrowserCommand, EngineCapabilities, EngineDescriptor, EngineKind};
+use browser_engine::{BrowserCommand, BrowserView, EngineCapabilities, EngineDescriptor, EngineKind};
 
 pub const START_PAGE: &str = "https://example.com";
 
@@ -55,6 +55,50 @@ pub fn dispatch_navigation<E>(
     }
 }
 
+/// Minimal stateful adapter, with navigation delegated to a UI-thread-bound host.
+/// Construct and use it on the engine's owning thread.
+pub struct WebView2View<N> {
+    navigate: N,
+}
+
+impl<N> WebView2View<N> {
+    pub fn new(navigate: N) -> Self {
+        Self { navigate }
+    }
+}
+
+impl<N, E> BrowserView for WebView2View<N>
+where
+    N: FnMut(&str) -> Result<(), E>,
+    E: std::error::Error,
+{
+    type Error = ViewError<E>;
+
+    fn dispatch(&mut self, command: BrowserCommand) -> Result<(), Self::Error> {
+        dispatch_navigation(command, &mut self.navigate).map_err(|error| match error {
+            NavigationDispatchError::Unsupported => ViewError::Unsupported,
+            NavigationDispatchError::Engine(error) => ViewError::Engine(error),
+        })
+    }
+}
+
+#[derive(Debug)]
+pub enum ViewError<E> {
+    Unsupported,
+    Engine(E),
+}
+
+impl<E: std::fmt::Display> std::fmt::Display for ViewError<E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unsupported => f.write_str("command is not supported"),
+            Self::Engine(error) => write!(f, "engine command failed: {error}"),
+        }
+    }
+}
+
+impl<E: std::error::Error> std::error::Error for ViewError<E> {}
+
 #[cfg(windows)]
 pub fn run() -> windows_webview::Result<()> {
     use windows_webview::WebViewWindow;
@@ -81,13 +125,12 @@ pub fn run() -> windows_webview::Result<()> {
                 })?,
             ];
             host.retain_all(registrations);
-            dispatch_navigation(BrowserCommand::Navigate(START_PAGE.to_owned()), |url| {
-                webview.navigate(url)
-            })
-            .map_err(|error| match error {
-                NavigationDispatchError::Engine(error) => error,
-                NavigationDispatchError::Unsupported => unreachable!("startup uses Navigate"),
-            })?;
+            let mut view = WebView2View::new(|url| webview.navigate(url));
+            view.dispatch(BrowserCommand::Navigate(START_PAGE.to_owned()))
+                .map_err(|error| match error {
+                    ViewError::Engine(error) => error,
+                    ViewError::Unsupported => unreachable!("startup uses Navigate"),
+                })?;
             Ok(())
         })
 }
@@ -139,4 +182,31 @@ mod tests {
         assert_eq!(result, Err(NavigationDispatchError::Unsupported));
         assert!(!called);
     }
+    #[test]
+    fn view_trait_dispatches_multiple_navigation_commands() {
+        let mut urls = Vec::new();
+        let mut view = WebView2View::new(|url: &str| {
+            urls.push(url.to_owned());
+            Ok::<(), std::io::Error>(())
+        });
+        view.dispatch(BrowserCommand::Navigate("https://example.com".into()))
+            .expect("first navigation");
+        view.dispatch(BrowserCommand::Navigate("https://rust-lang.org".into()))
+            .expect("second navigation");
+        assert!(matches!(view.dispatch(BrowserCommand::Back), Err(ViewError::Unsupported)));
+        drop(view);
+        assert_eq!(urls, ["https://example.com", "https://rust-lang.org"]);
+    }
+
+    #[test]
+    fn view_trait_propagates_engine_error() {
+        let mut view = WebView2View::new(|_: &str| {
+            Err::<(), _>(std::io::Error::other("navigation failed"))
+        });
+        assert!(matches!(
+            view.dispatch(BrowserCommand::Navigate("https://example.com".into())),
+            Err(ViewError::Engine(_))
+        ));
+    }
+
 }
