@@ -1,21 +1,21 @@
-# Group 4 — Engine abstraction (initial implementation)
+# Group 4 — Engine abstraction
 
-## Implemented
+## Current state
 
-- Engine descriptor and capability types independent of native COM.
-- Browser navigation commands and lifecycle event values.
-- BrowserView dispatch trait, intended for a UI-thread owner.
-- WebView2 capability declaration and unit tests.
-- Removed the unsupported `system` Cargo feature from `windows-webview`.
+Engine-neutral types, events, commands and capability flags are defined. The application hosts WebView2 via a convenience Windows host. The live command and event adapter has not yet been implemented.
 
-## Incomplete
+## Dependency correction
 
-The prototype currently starts through `WebViewWindow::run`. It does not yet expose a full live BrowserView adapter or route native WebView2 events through BrowserEvent. Group 4 is only complete when the host's navigation and lifecycle are wired to the traits and the Windows CI build passes.
+The crates.io windows-webview 0.100.0 package does not expose the documented `system` feature. Without this feature, `WebViewWindow` is unavailable. The dependency now targets the Microsoft windows-rs Git repository using the documented `system` feature.
 
-Future Servo support must not assume suspension, downloads, and profiles are uniformly implemented by all engines.
+This Git dependency is an interim solution pending a pinned verified revision and repeatable Cargo.lock; a floating branch must not ship in production.
 
-## Verification
+## Next work
 
-- Run Windows CI for dependency resolution, clippy, tests and release build.
-- On a Windows desktop, launch and close the WebView2 window.
-- Confirm no orphaned browser processes remain after exit.
+1. Confirm this source resolves on the Windows CI runner.
+2. Pin a verified Git revision or published version and commit Cargo.lock.
+3. Connect host commands to a concrete UI-thread dispatcher.
+4. Translate WebView2 navigation and process events to BrowserEvent.
+5. Add runtime Windows smoke tests.
+
+No full browser navigation UI or Servo integration is claimed.

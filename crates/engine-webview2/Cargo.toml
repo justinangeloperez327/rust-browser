@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-windows-webview = "0.100"
+windows-webview = { git = "https://github.com/microsoft/windows-rs", package = "windows-webview", features = ["system"] }
 
 [dependencies]
 browser-engine = { path = "../browser-engine" }
