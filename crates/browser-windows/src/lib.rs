@@ -40,20 +40,16 @@ mod native {
         DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, CreateWindowExW, DefWindowProcW,
-        DestroyWindow, DispatchMessageW, GetMessageW, IDC_ARROW, LoadCursorW, MSG,
-        PostQuitMessage, RegisterClassW, SWP_NOACTIVATE, SWP_NOZORDER, SetWindowPos,
-        ShowWindow, TranslateMessage, WM_DESTROY, WM_DPICHANGED, WNDCLASSW,
-        WS_OVERLAPPEDWINDOW, SW_SHOW,
+        CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, CreateWindowExW, DefWindowProcW, DestroyWindow,
+        DispatchMessageW, GetMessageW, IDC_ARROW, LoadCursorW, MSG, PostQuitMessage,
+        RegisterClassW, SW_SHOW, SWP_NOACTIVATE, SWP_NOZORDER, SetWindowPos, ShowWindow,
+        TranslateMessage, WM_DESTROY, WM_DPICHANGED, WNDCLASSW, WS_OVERLAPPEDWINDOW,
     };
 
     const CLASS: &[u16] = &[
-        82, 117, 115, 116, 66, 114, 111, 119, 115, 101, 114, 87, 105, 110, 100, 111,
-        119, 0,
+        82, 117, 115, 116, 66, 114, 111, 119, 115, 101, 114, 87, 105, 110, 100, 111, 119, 0,
     ]; // RustBrowserWindow
-    const TITLE: &[u16] = &[
-        82, 117, 115, 116, 66, 114, 111, 119, 115, 101, 114, 0,
-    ]; // RustBrowser
+    const TITLE: &[u16] = &[82, 117, 115, 116, 66, 114, 111, 119, 115, 101, 114, 0]; // RustBrowser
 
     unsafe extern "system" fn window_proc(
         hwnd: HWND,
