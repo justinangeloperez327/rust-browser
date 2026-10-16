@@ -1,6 +1,8 @@
 //! Windows-native WebView2 host, isolated from engine-neutral domain types.
 
-use browser_engine::{BrowserCommand, BrowserView, EngineCapabilities, EngineDescriptor, EngineKind};
+use browser_engine::{
+    BrowserCommand, BrowserView, EngineCapabilities, EngineDescriptor, EngineKind,
+};
 
 pub const START_PAGE: &str = "https://example.com";
 
@@ -193,20 +195,21 @@ mod tests {
             .expect("first navigation");
         view.dispatch(BrowserCommand::Navigate("https://rust-lang.org".into()))
             .expect("second navigation");
-        assert!(matches!(view.dispatch(BrowserCommand::Back), Err(ViewError::Unsupported)));
+        assert!(matches!(
+            view.dispatch(BrowserCommand::Back),
+            Err(ViewError::Unsupported)
+        ));
         drop(view);
         assert_eq!(urls, ["https://example.com", "https://rust-lang.org"]);
     }
 
     #[test]
     fn view_trait_propagates_engine_error() {
-        let mut view = WebView2View::new(|_: &str| {
-            Err::<(), _>(std::io::Error::other("navigation failed"))
-        });
+        let mut view =
+            WebView2View::new(|_: &str| Err::<(), _>(std::io::Error::other("navigation failed")));
         assert!(matches!(
             view.dispatch(BrowserCommand::Navigate("https://example.com".into())),
             Err(ViewError::Engine(_))
         ));
     }
-
 }
