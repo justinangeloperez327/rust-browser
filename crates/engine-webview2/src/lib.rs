@@ -1,6 +1,6 @@
 //! Windows-native WebView2 host, isolated from engine-neutral domain types.
 
-use browser_engine::{EngineCapabilities, EngineDescriptor, EngineKind};
+use browser_engine::{BrowserCommand, EngineCapabilities, EngineDescriptor, EngineKind};
 
 pub const START_PAGE: &str = "https://example.com";
 
@@ -21,12 +21,37 @@ impl EngineDescriptor for WebView2Engine {
     fn capabilities(&self) -> EngineCapabilities {
         EngineCapabilities {
             navigation: true,
-            reload: true,
-            history: true,
+            reload: false,
+            history: false,
             suspension: false,
             downloads: false,
             private_profiles: false,
         }
+    }
+}
+
+/// Dispatch failure is distinguished from a command that is not wired yet.
+#[derive(Debug, PartialEq, Eq)]
+pub enum NavigationDispatchError<E> {
+    Unsupported,
+    Engine(E),
+}
+
+/// Executes navigation through the concrete engine on its owning UI thread.
+/// Back/forward/reload/stop are deliberately rejected until wired.
+pub fn dispatch_navigation<E>(
+    command: BrowserCommand,
+    mut navigate: impl FnMut(&str) -> Result<(), E>,
+) -> Result<(), NavigationDispatchError<E>> {
+    match command {
+        BrowserCommand::Navigate(url) => {
+            let url = url.trim();
+            if url.is_empty() {
+                return Err(NavigationDispatchError::Unsupported);
+            }
+            navigate(url).map_err(NavigationDispatchError::Engine)
+        }
+        _ => Err(NavigationDispatchError::Unsupported),
     }
 }
 
@@ -56,7 +81,13 @@ pub fn run() -> windows_webview::Result<()> {
                 })?,
             ];
             host.retain_all(registrations);
-            webview.navigate(START_PAGE)?;
+            dispatch_navigation(BrowserCommand::Navigate(START_PAGE.to_owned()), |url| {
+                webview.navigate(url)
+            })
+            .map_err(|error| match error {
+                NavigationDispatchError::Engine(error) => error,
+                NavigationDispatchError::Unsupported => unreachable!("startup uses Navigate"),
+            })?;
             Ok(())
         })
 }
@@ -81,5 +112,28 @@ mod tests {
         assert_eq!(engine.kind(), EngineKind::WebView2);
         assert!(engine.capabilities().navigation);
         assert!(!engine.capabilities().suspension);
+        assert!(!engine.capabilities().reload);
     }
+    #[test]
+    fn dispatches_navigation_target() {
+        let mut received = String::new();
+        let result = dispatch_navigation(BrowserCommand::Navigate(" https://example.com ".into()), |url| {
+            received = url.to_owned();
+            Ok::<_, &'static str>(())
+        });
+        assert_eq!(result, Ok(()));
+        assert_eq!(received, "https://example.com");
+    }
+
+    #[test]
+    fn rejects_unsupported_commands_without_invoking_engine() {
+        let mut called = false;
+        let result = dispatch_navigation(BrowserCommand::Reload, |_| {
+            called = true;
+            Ok::<_, &'static str>(())
+        });
+        assert_eq!(result, Err(NavigationDispatchError::Unsupported));
+        assert!(!called);
+    }
+
 }
