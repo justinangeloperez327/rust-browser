@@ -5,7 +5,10 @@ edition.workspace = true
 license.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-windows-webview = { version = "0.100", features = ["system"] }
+windows-webview = "0.100"
+
+[dependencies]
+browser-engine = { path = "../browser-engine" }
 
 [lints]
 workspace = true

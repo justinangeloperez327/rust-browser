@@ -1,16 +1,33 @@
-//! Native WebView2 window hosting for the initial browser prototype.
-//!
-//! A dedicated browser-engine interface and shared environment are planned for Group 4.
-//! At this stage, windows-webview owns the native window, UI message loop,
-//! controller resizing, COM apartment, and shutdown sequence.
+//! Windows-native WebView2 host, isolated from engine-neutral domain types.
 
-/// Default first page.
+use browser_engine::{EngineCapabilities, EngineDescriptor, EngineKind};
+
 pub const START_PAGE: &str = "https://example.com";
 
-/// WebView2 Evergreen Runtime must be installed on the host.
 #[must_use]
 pub const fn runtime_name() -> &'static str {
     "Microsoft Edge WebView2 Evergreen Runtime"
+}
+
+/// Host adapter capability declaration.
+/// Advanced browser functionality must not be marked as supported prematurely.
+pub struct WebView2Engine;
+
+impl EngineDescriptor for WebView2Engine {
+    fn kind(&self) -> EngineKind {
+        EngineKind::WebView2
+    }
+
+    fn capabilities(&self) -> EngineCapabilities {
+        EngineCapabilities {
+            navigation: true,
+            reload: true,
+            history: true,
+            suspension: false,
+            downloads: false,
+            private_profiles: false,
+        }
+    }
 }
 
 #[cfg(windows)]
@@ -35,12 +52,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn startup_page_is_https() {
+    fn homepage_is_https() {
         assert!(START_PAGE.starts_with("https://"));
     }
 
     #[test]
-    fn runtime_dependency_is_documented() {
-        assert!(runtime_name().contains("WebView2"));
+    fn capabilities_are_conservative() {
+        let engine = WebView2Engine;
+        assert_eq!(engine.kind(), EngineKind::WebView2);
+        assert!(engine.capabilities().navigation);
+        assert!(!engine.capabilities().suspension);
     }
 }
