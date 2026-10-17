@@ -103,10 +103,10 @@ impl<E: std::error::Error> std::error::Error for ViewError<E> {}
 
 #[cfg(windows)]
 pub fn run() -> windows_webview::Result<()> {
-    use windows_webview::WebViewWindow;
-    use std::sync::{Arc, Mutex};
     use browser_core::ViewState;
     use browser_engine::BrowserEvent;
+    use std::sync::{Arc, Mutex};
+    use windows_webview::WebViewWindow;
 
     WebViewWindow::new("RustBrowser")
         .size(1200, 800)
