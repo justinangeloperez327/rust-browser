@@ -127,7 +127,7 @@ pub fn run() -> windows_webview::Result<()> {
                 })?,
             ];
             host.retain_all(registrations);
-            let mut view = WebView2View::new(|url| webview.navigate(url));
+            let mut view = WebView2View::new(|url| webview.navigate(url).map(|_| ()));
             view.dispatch(BrowserCommand::Navigate(START_PAGE.to_owned()))
                 .map_err(|error| match error {
                     ViewError::Engine(error) => error,
