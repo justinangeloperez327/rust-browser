@@ -104,35 +104,49 @@ impl<E: std::error::Error> std::error::Error for ViewError<E> {}
 #[cfg(windows)]
 pub fn run() -> windows_webview::Result<()> {
     use windows_webview::WebViewWindow;
+    use std::sync::{Arc, Mutex};
+    use browser_core::ViewState;
+    use browser_engine::BrowserEvent;
 
     WebViewWindow::new("RustBrowser")
         .size(1200, 800)
         .run(|host| {
             let webview = host.webview();
             let completed_view = webview.clone();
+            let state = Arc::new(Mutex::new(ViewState::default()));
+            if let Ok(mut snapshot) = state.lock() {
+                snapshot.apply(BrowserEvent::Ready);
+            }
+            let completed_state = Arc::clone(&state);
+            let title_state = Arc::clone(&state);
+            let failure_state = Arc::clone(&state);
             let registrations = vec![
                 webview.on_navigation_completed(move |args| {
                     let event = browser_engine::BrowserEvent::NavigationCompleted {
                         url: completed_view.source(),
                         success: args.is_success(),
                     };
+                    if let Ok(mut snapshot) = completed_state.lock() {
+                        snapshot.apply(event.clone());
+                    }
                     tracing::info!(?event, "WebView2 navigation completed");
                 })?,
                 webview.on_document_title_changed(|title| {
                     let event = browser_engine::BrowserEvent::TitleChanged(title.to_owned());
+                    if let Ok(mut snapshot) = title_state.lock() {
+                        snapshot.apply(event.clone());
+                    }
                     tracing::info!(?event, "WebView2 title changed");
                 })?,
                 webview.on_process_failed(|args| {
+                    if let Ok(mut snapshot) = failure_state.lock() {
+                        snapshot.apply(BrowserEvent::ProcessFailed);
+                    }
                     tracing::error!(kind = ?args.kind(), "WebView2 process failure");
                 })?,
             ];
             host.retain_all(registrations);
-            let mut view = WebView2View::new(|url| webview.navigate(url).map(|_| ()));
-            view.dispatch(BrowserCommand::Navigate(START_PAGE.to_owned()))
-                .map_err(|error| match error {
-                    ViewError::Engine(error) => error,
-                    ViewError::Unsupported => unreachable!("startup uses Navigate"),
-                })?;
+            webview.navigate(START_PAGE)?;
             Ok(())
         })
 }

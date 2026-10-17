@@ -10,6 +10,7 @@ windows-webview = { git = "https://github.com/microsoft/windows-rs", package = "
 [dependencies]
 tracing = "0.1"
 browser-engine = { path = "../browser-engine" }
+browser-core = { path = "../browser-core" }
 
 [lints]
 workspace = true
