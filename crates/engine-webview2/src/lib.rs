@@ -131,14 +131,14 @@ pub fn run() -> windows_webview::Result<()> {
                     }
                     tracing::info!(?event, "WebView2 navigation completed");
                 })?,
-                webview.on_document_title_changed(|title| {
+                webview.on_document_title_changed(move |title| {
                     let event = browser_engine::BrowserEvent::TitleChanged(title.to_owned());
                     if let Ok(mut snapshot) = title_state.lock() {
                         snapshot.apply(event.clone());
                     }
                     tracing::info!(?event, "WebView2 title changed");
                 })?,
-                webview.on_process_failed(|args| {
+                webview.on_process_failed(move |args| {
                     if let Ok(mut snapshot) = failure_state.lock() {
                         snapshot.apply(BrowserEvent::ProcessFailed);
                     }
