@@ -83,13 +83,12 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let controls = Toolbar::new(window.hwnd(), start_url)
         .map_err(|error| format!("Creating browser toolbar failed: {error}"))?;
-    let (width, _) = window.client_size();
+    let (width, height) = window.client_size();
     controls.resize(width);
     *toolbar.borrow_mut() = Some(controls);
 
     let target = start_url.to_owned();
     let created_host = Rc::clone(&host);
-    let created_toolbar = Rc::clone(&toolbar);
     windows_webview::WebViewHost::builder().create_for_hwnd(window.hwnd(), move |result| {
         let instance = match result {
             Ok(host) => host,
@@ -100,7 +99,6 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
             }
         };
         let view = instance.webview();
-        let (width, height) = window_dimensions(&created_toolbar);
         if let Err(error) = instance.controller().set_bounds(0, toolbar::HEIGHT, width, height) {
             *error_slot.borrow_mut() = Some(error.to_string());
             windows_window::quit();
@@ -125,7 +123,3 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn window_dimensions(_toolbar: &Rc<RefCell<Option<Toolbar>>>) -> (i32, i32) {
-    // Initial WebView2 bounds; subsequent WM_SIZE updates use live client dimensions.
-    (1200, 800)
-}
