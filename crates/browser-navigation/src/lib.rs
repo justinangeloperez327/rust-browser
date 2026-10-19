@@ -62,13 +62,13 @@ pub fn resolve_address(input: &str) -> Result<String, AddressError> {
         && !input.contains(['/', '\\', '@', '?', '#'])
         && (input.contains('.') || input.eq_ignore_ascii_case("localhost"))
     {
-        if let Ok(url) = Url::parse(&format!("https://{input}")) {
-            if matches!(
+        if let Ok(url) = Url::parse(&format!("https://{input}"))
+            && matches!(
                 url.host(),
                 Some(Host::Domain(_)) | Some(Host::Ipv4(_)) | Some(Host::Ipv6(_))
-            ) {
-                return validated_http(url);
-            }
+            )
+        {
+            return validated_http(url);
         }
         return Err(AddressError::InvalidHost);
     }
