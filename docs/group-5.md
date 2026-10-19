@@ -1,6 +1,6 @@
-# Group 5 — Navigation (first functional increment)
+# Group 5 — Navigation
 
-The browser can now launch an HTTP(S) URL, bare hostname, or encoded search phrase from the command line.
+The browser accepts launch URLs and search phrases through the command line. Its address resolver now uses the standard `url` crate and form-url-encoding rather than custom authority parsing.
 
 Examples:
 
@@ -10,6 +10,6 @@ cargo run -p rust-browser -- rust-lang.org
 cargo run -p rust-browser -- "Rust browser performance"
 ```
 
-All launch inputs are normalized by browser-navigation. Dangerous/unsupported schemes are rejected. The implementation is an initial parser, not an exhaustive URL security validator; a standards-compliant URL parser is planned.
+Explicit unsupported URI schemes are rejected. Network access is still governed by WebView2; URL validation is not a security sandbox.
 
-The runtime WebView2 window navigates to the resolved destination. A native address bar, Back, Forward, Reload, Stop and keyboard shortcuts are **not yet implemented**. Manual Windows smoke testing is required.
+Next: native editable address bar, Back / Forward / Reload / Stop and keyboard shortcuts. No interactive UI navigation controls are claimed by this change.
