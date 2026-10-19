@@ -5,6 +5,7 @@ members = [
     "crates/browser-core",
     "crates/browser-engine",
     "crates/browser-windows",
+    "crates/browser-navigation",
     "crates/engine-webview2",
 ]
 

@@ -102,7 +102,7 @@ impl<E: std::fmt::Display> std::fmt::Display for ViewError<E> {
 impl<E: std::error::Error> std::error::Error for ViewError<E> {}
 
 #[cfg(windows)]
-pub fn run() -> windows_webview::Result<()> {
+pub fn run(start_url: &str) -> windows_webview::Result<()> {
     use browser_core::ViewState;
     use browser_engine::BrowserEvent;
     use std::sync::{Arc, Mutex};
@@ -146,13 +146,13 @@ pub fn run() -> windows_webview::Result<()> {
                 })?,
             ];
             host.retain_all(registrations);
-            webview.navigate(START_PAGE)?;
+            webview.navigate(start_url)?;
             Ok(())
         })
 }
 
 #[cfg(not(windows))]
-pub fn run() -> Result<(), &'static str> {
+pub fn run(_start_url: &str) -> Result<(), &'static str> {
     Err("RustBrowser requires Windows")
 }
 

@@ -17,6 +17,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         platform = platform.name(),
         "RustBrowser starting"
     );
-    engine_webview2::run().map_err(|err| format!("WebView2 hosting failed: {err}"))?;
+    let address = std::env::args().nth(1);
+    let target = match address {
+        Some(input) => browser_navigation::resolve_address(&input)?,
+        None => engine_webview2::START_PAGE.to_owned(),
+    };
+    engine_webview2::run(&target).map_err(|err| format!("WebView2 hosting failed: {err}"))?;
     Ok(())
 }
