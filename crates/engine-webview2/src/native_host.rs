@@ -90,6 +90,7 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let target = start_url.to_owned();
     let created_host = Rc::clone(&host);
+    let completed_toolbar = Rc::clone(&toolbar);
     windows_webview::WebViewHost::builder()
         .create_for_hwnd(window.hwnd(), move |result| {
             let instance = match result {
@@ -115,6 +116,52 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 *error_slot.borrow_mut() = Some(error.to_string());
                 windows_window::quit();
                 return;
+            }
+            let completed_view = view.clone();
+            let title_view = view.clone();
+            let registrations = [
+                view.on_navigation_completed(move |args| {
+                    tracing::info!(
+                        url = %completed_view.source(),
+                        success = args.is_success(),
+                        "Navigation completed"
+                    );
+                }),
+                view.on_document_title_changed(move |title| {
+                    tracing::info!(%title, "Page title changed");
+                }),
+                view.on_process_failed(move |args| {
+                    tracing::error!(kind = ?args.kind(), "WebView2 process failed");
+                }),
+            ];
+            for registration in registrations {
+                match registration {
+                    Ok(registration) => instance.retain(registration),
+                    Err(error) => tracing::error!(%error, "Registering browser event failed"),
+                }
+            }
+            let shortcut_view = title_view;
+            match instance.controller().on_accelerator_key_pressed(move |args| {
+                use windows_webview::KeyEventKind;
+                let command = match (args.key_event_kind(), args.virtual_key()) {
+                    (KeyEventKind::KeyDown, 0x74) => Some(BrowserCommand::Reload),
+                    (KeyEventKind::KeyDown, 0x1B) => Some(BrowserCommand::Stop),
+                    (KeyEventKind::SystemKeyDown, 0x25) => Some(BrowserCommand::Back),
+                    (KeyEventKind::SystemKeyDown, 0x27) => Some(BrowserCommand::Forward),
+                    _ => None,
+                };
+                if let Some(command) = command {
+                    if let Err(error) = super::dispatch_webview_command(&shortcut_view, command) {
+                        tracing::warn!(%error, "Keyboard navigation failed");
+                    }
+                    let _ = args.set_handled(true);
+                }
+            }) {
+                Ok(registration) => instance.retain(registration),
+                Err(error) => tracing::error!(%error, "Registering keyboard shortcuts failed"),
+            }
+            if let Some(controls) = completed_toolbar.borrow().as_ref() {
+                controls.set_address(&view.source());
             }
             *created_host.borrow_mut() = Some(instance);
         })
