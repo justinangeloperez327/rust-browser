@@ -123,4 +123,3 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
-
