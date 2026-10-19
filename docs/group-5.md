@@ -1,6 +1,8 @@
 # Group 5 — Navigation
 
-The browser accepts launch URLs and search phrases through the command line. Its address resolver now uses the standard `url` crate and form-url-encoding rather than custom authority parsing.
+Startup URLs and search queries are normalized in `browser-navigation`. WebView2 now has a concrete UI-thread command dispatcher for Navigate, Back, Forward, Reload, and Stop, and startup navigation uses it.
+
+The dispatcher is available in the engine but not yet connected to a native toolbar or keyboard accelerators. It must only be used on WebView2's owning thread. Calling Back or Forward with no history may return an engine error; callers must handle this.
 
 Examples:
 
@@ -10,6 +12,4 @@ cargo run -p rust-browser -- rust-lang.org
 cargo run -p rust-browser -- "Rust browser performance"
 ```
 
-Explicit unsupported URI schemes are rejected. Network access is still governed by WebView2; URL validation is not a security sandbox.
-
-Next: native editable address bar, Back / Forward / Reload / Stop and keyboard shortcuts. No interactive UI navigation controls are claimed by this change.
+Remaining: native address bar, live toolbar button wiring, keyboard shortcuts, interactive smoke test.

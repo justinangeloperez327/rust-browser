@@ -57,6 +57,29 @@ pub fn dispatch_navigation<E>(
     }
 }
 
+/// Dispatches all basic navigation operations on the WebView2 owning UI thread.
+///
+/// The host must call this function from its UI thread; it does not marshal
+/// commands across threads.
+#[cfg(windows)]
+pub fn dispatch_webview_command(
+    webview: &windows_webview::WebView,
+    command: BrowserCommand,
+) -> windows_webview::Result<()> {
+    match command {
+        BrowserCommand::Navigate(url) => {
+            if url.trim().is_empty() {
+                return Ok(());
+            }
+            webview.navigate(url.trim()).map(|_| ())
+        }
+        BrowserCommand::Reload => webview.reload(),
+        BrowserCommand::Stop => webview.stop(),
+        BrowserCommand::Back => webview.go_back(),
+        BrowserCommand::Forward => webview.go_forward(),
+    }
+}
+
 /// Minimal stateful adapter, with navigation delegated to a UI-thread-bound host.
 /// Construct and use it on the engine's owning thread.
 pub struct WebView2View<N> {
@@ -146,7 +169,10 @@ pub fn run(start_url: &str) -> windows_webview::Result<()> {
                 })?,
             ];
             host.retain_all(registrations);
-            webview.navigate(start_url)?;
+            dispatch_webview_command(
+                &webview,
+                BrowserCommand::Navigate(start_url.to_owned()),
+            )?;
             Ok(())
         })
 }
