@@ -1,5 +1,8 @@
 //! Windows-specific functionality is isolated in this crate.
 
+#[cfg(windows)]
+pub mod toolbar;
+
 pub struct PlatformInfo;
 
 impl PlatformInfo {
