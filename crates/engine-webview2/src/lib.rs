@@ -131,9 +131,10 @@ pub fn run(start_url: &str) -> windows_webview::Result<()> {
     use std::sync::{Arc, Mutex};
     use windows_webview::WebViewWindow;
 
+    let start_url = start_url.to_owned();
     WebViewWindow::new("RustBrowser")
         .size(1200, 800)
-        .run(|host| {
+        .run(move |host| {
             let webview = host.webview();
             let completed_view = webview.clone();
             let state = Arc::new(Mutex::new(ViewState::default()));
