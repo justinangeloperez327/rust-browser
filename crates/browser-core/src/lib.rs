@@ -129,5 +129,4 @@ mod tests {
         assert_eq!(state.url.as_deref(), Some("https://example.com"));
         assert_eq!(state.title.as_deref(), Some("Example"));
     }
-
 }
