@@ -191,7 +191,7 @@ pub fn run(start_url: &str) -> windows_webview::Result<()> {
             })?;
             host.retain(accelerator);
             host.retain_all(registrations);
-            dispatch_webview_command(&webview, BrowserCommand::Navigate(start_url.to_owned()))?;
+            dispatch_webview_command(webview, BrowserCommand::Navigate(start_url.to_owned()))?;
             Ok(())
         })
 }
