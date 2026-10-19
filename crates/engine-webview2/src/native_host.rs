@@ -1,4 +1,5 @@
 //! Host-owned Windows window: Win32 controls and WebView2 share the UI STA.
+#![allow(unsafe_code)]
 use browser_engine::BrowserCommand;
 use browser_windows::toolbar::{self, Toolbar};
 use std::cell::RefCell;
@@ -10,7 +11,7 @@ const WM_COMMAND: u32 = 0x0111;
 
 pub fn run(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     // SAFETY: CoInitializeEx operates on the current UI thread.
-    let initialized = unsafe { CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED) };
+    let initialized = unsafe { CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32) };
     if initialized < 0 {
         return Err(format!("COM STA initialization failed: {initialized}").into());
     }
@@ -114,7 +115,8 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
             return;
         }
         *created_host.borrow_mut() = Some(instance);
-    })?;
+    })
+    .map_err(|error| format!("Creating WebView2 host failed: {error}"))?;
 
     windows_window::run();
     host.borrow_mut().take();
