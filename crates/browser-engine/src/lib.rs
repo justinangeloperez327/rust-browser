@@ -1,6 +1,8 @@
 //! Engine-neutral contracts for RustBrowser.
 //! Native engine implementations handle UI-thread affinity separately.
 
+pub mod mailbox;
+
 /// Supported engine implementations.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EngineKind {
