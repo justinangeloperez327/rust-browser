@@ -125,75 +125,11 @@ impl<E: std::fmt::Display> std::fmt::Display for ViewError<E> {
 impl<E: std::error::Error> std::error::Error for ViewError<E> {}
 
 #[cfg(windows)]
-pub fn run(start_url: &str) -> windows_webview::Result<()> {
-    use browser_core::ViewState;
-    use browser_engine::BrowserEvent;
-    use std::sync::{Arc, Mutex};
-    use windows_webview::WebViewWindow;
+mod native_host;
 
-    let start_url = start_url.to_owned();
-    WebViewWindow::new("RustBrowser")
-        .size(1200, 800)
-        .run(move |host| {
-            let webview = host.webview();
-            let completed_view = webview.clone();
-            let state = Arc::new(Mutex::new(ViewState::default()));
-            if let Ok(mut snapshot) = state.lock() {
-                snapshot.apply(BrowserEvent::Ready);
-            }
-            let completed_state = Arc::clone(&state);
-            let title_state = Arc::clone(&state);
-            let failure_state = Arc::clone(&state);
-            let registrations = vec![
-                webview.on_navigation_completed(move |args| {
-                    let event = browser_engine::BrowserEvent::NavigationCompleted {
-                        url: completed_view.source(),
-                        success: args.is_success(),
-                    };
-                    if let Ok(mut snapshot) = completed_state.lock() {
-                        snapshot.apply(event.clone());
-                    }
-                    tracing::info!(?event, "WebView2 navigation completed");
-                })?,
-                webview.on_document_title_changed(move |title| {
-                    let event = browser_engine::BrowserEvent::TitleChanged(title.to_owned());
-                    if let Ok(mut snapshot) = title_state.lock() {
-                        snapshot.apply(event.clone());
-                    }
-                    tracing::info!(?event, "WebView2 title changed");
-                })?,
-                webview.on_process_failed(move |args| {
-                    if let Ok(mut snapshot) = failure_state.lock() {
-                        snapshot.apply(BrowserEvent::ProcessFailed);
-                    }
-                    tracing::error!(kind = ?args.kind(), "WebView2 process failure");
-                })?,
-            ];
-            let accelerator_view = webview.clone();
-            let accelerator = host.controller().on_accelerator_key_pressed(move |args| {
-                use windows_webview::KeyEventKind;
-
-                let command = match (args.key_event_kind(), args.virtual_key()) {
-                    (KeyEventKind::KeyDown, 0x74) => Some(BrowserCommand::Reload),
-                    (KeyEventKind::KeyDown, 0x1B) => Some(BrowserCommand::Stop),
-                    (KeyEventKind::SystemKeyDown, 0x25) => Some(BrowserCommand::Back),
-                    (KeyEventKind::SystemKeyDown, 0x27) => Some(BrowserCommand::Forward),
-                    _ => None,
-                };
-                if let Some(command) = command {
-                    if let Err(error) = dispatch_webview_command(&accelerator_view, command) {
-                        tracing::warn!(%error, "Browser shortcut failed");
-                    }
-                    if let Err(error) = args.set_handled(true) {
-                        tracing::warn!(%error, "Could not mark browser shortcut handled");
-                    }
-                }
-            })?;
-            host.retain(accelerator);
-            host.retain_all(registrations);
-            dispatch_webview_command(webview, BrowserCommand::Navigate(start_url.to_owned()))?;
-            Ok(())
-        })
+#[cfg(windows)]
+pub fn run(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    native_host::run(start_url)
 }
 
 #[cfg(not(windows))]
