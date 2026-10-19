@@ -90,33 +90,35 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let target = start_url.to_owned();
     let created_host = Rc::clone(&host);
-    windows_webview::WebViewHost::builder().create_for_hwnd(window.hwnd(), move |result| {
-        let instance = match result {
-            Ok(host) => host,
-            Err(error) => {
+    windows_webview::WebViewHost::builder()
+        .create_for_hwnd(window.hwnd(), move |result| {
+            let instance = match result {
+                Ok(host) => host,
+                Err(error) => {
+                    *error_slot.borrow_mut() = Some(error.to_string());
+                    windows_window::quit();
+                    return;
+                }
+            };
+            let view = instance.webview();
+            if let Err(error) = instance
+                .controller()
+                .set_bounds(0, toolbar::HEIGHT, width, height)
+            {
                 *error_slot.borrow_mut() = Some(error.to_string());
                 windows_window::quit();
                 return;
             }
-        };
-        let view = instance.webview();
-        if let Err(error) = instance
-            .controller()
-            .set_bounds(0, toolbar::HEIGHT, width, height)
-        {
-            *error_slot.borrow_mut() = Some(error.to_string());
-            windows_window::quit();
-            return;
-        }
-        if let Err(error) = super::dispatch_webview_command(view, BrowserCommand::Navigate(target))
-        {
-            *error_slot.borrow_mut() = Some(error.to_string());
-            windows_window::quit();
-            return;
-        }
-        *created_host.borrow_mut() = Some(instance);
-    })
-    .map_err(|error| format!("Creating WebView2 host failed: {error}"))?;
+            if let Err(error) =
+                super::dispatch_webview_command(view, BrowserCommand::Navigate(target))
+            {
+                *error_slot.borrow_mut() = Some(error.to_string());
+                windows_window::quit();
+                return;
+            }
+            *created_host.borrow_mut() = Some(instance);
+        })
+        .map_err(|error| format!("Creating WebView2 host failed: {error}"))?;
 
     windows_window::run();
     host.borrow_mut().take();
