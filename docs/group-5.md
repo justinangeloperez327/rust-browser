@@ -1,8 +1,17 @@
 # Group 5 — Navigation
 
-Startup URLs and search queries are normalized in `browser-navigation`. WebView2 now has a concrete UI-thread command dispatcher for Navigate, Back, Forward, Reload, and Stop, and startup navigation uses it.
+RustBrowser accepts an HTTP(S) URL, hostname or search query as a launch argument. Input resolution uses the `url` crate.
 
-The dispatcher is available in the engine but not yet connected to a native toolbar or keyboard accelerators. It must only be used on WebView2's owning thread. Calling Back or Forward with no history may return an engine error; callers must handle this.
+The WebView2 host now handles native accelerator keys:
+
+| Shortcut | Command |
+| --- | --- |
+| F5 | Reload |
+| Escape | Stop loading |
+| Alt+Left | Back |
+| Alt+Right | Forward |
+
+Keyboard accelerators are registered with WebView2's controller on its UI thread, and retained for the host lifecycle. Calls can fail (for example if no back history exists); failures are logged, not silently assumed successful.
 
 Examples:
 
@@ -12,4 +21,4 @@ cargo run -p rust-browser -- rust-lang.org
 cargo run -p rust-browser -- "Rust browser performance"
 ```
 
-Remaining: native address bar, live toolbar button wiring, keyboard shortcuts, interactive smoke test.
+Remaining: editable native address bar, clickable toolbar, additional keyboard shortcuts, desktop smoke test. The commands and shortcut wiring require a successful Windows CI run and interactive validation.
