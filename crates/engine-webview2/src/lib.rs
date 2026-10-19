@@ -201,19 +201,20 @@ mod tests {
     #[test]
     fn view_trait_dispatches_multiple_navigation_commands() {
         let mut urls = Vec::new();
-        let mut view = WebView2View::new(|url: &str| {
-            urls.push(url.to_owned());
-            Ok::<(), std::io::Error>(())
-        });
-        view.dispatch(BrowserCommand::Navigate("https://example.com".into()))
-            .expect("first navigation");
-        view.dispatch(BrowserCommand::Navigate("https://rust-lang.org".into()))
-            .expect("second navigation");
-        assert!(matches!(
-            view.dispatch(BrowserCommand::Back),
-            Err(ViewError::Unsupported)
-        ));
-        drop(view);
+        {
+            let mut view = WebView2View::new(|url: &str| {
+                urls.push(url.to_owned());
+                Ok::<(), std::io::Error>(())
+            });
+            view.dispatch(BrowserCommand::Navigate("https://example.com".into()))
+                .expect("first navigation");
+            view.dispatch(BrowserCommand::Navigate("https://rust-lang.org".into()))
+                .expect("second navigation");
+            assert!(matches!(
+                view.dispatch(BrowserCommand::Back),
+                Err(ViewError::Unsupported)
+            ));
+        }
         assert_eq!(urls, ["https://example.com", "https://rust-lang.org"]);
     }
 
