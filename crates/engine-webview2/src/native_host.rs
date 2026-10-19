@@ -3,9 +3,7 @@ use browser_engine::BrowserCommand;
 use browser_windows::toolbar::{self, Toolbar};
 use std::cell::RefCell;
 use std::rc::Rc;
-use windows_sys::Win32::System::Com::{
-    COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize,
-};
+use windows_sys::Win32::System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize};
 use windows_webview::WebViewHost;
 
 const WM_COMMAND: u32 = 0x0111;
@@ -70,7 +68,9 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 toolbar.resize(width);
             }
             if let Some(host) = resize_host.borrow().as_ref() {
-                let _ = host.controller().set_bounds(0, toolbar::HEIGHT, width, height);
+                let _ = host
+                    .controller()
+                    .set_bounds(0, toolbar::HEIGHT, width, height);
             }
         })
         .on_close(move || {
@@ -99,15 +99,16 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
             }
         };
         let view = instance.webview();
-        if let Err(error) = instance.controller().set_bounds(0, toolbar::HEIGHT, width, height) {
+        if let Err(error) = instance
+            .controller()
+            .set_bounds(0, toolbar::HEIGHT, width, height)
+        {
             *error_slot.borrow_mut() = Some(error.to_string());
             windows_window::quit();
             return;
         }
-        if let Err(error) = super::dispatch_webview_command(
-            view,
-            BrowserCommand::Navigate(target),
-        ) {
+        if let Err(error) = super::dispatch_webview_command(view, BrowserCommand::Navigate(target))
+        {
             *error_slot.borrow_mut() = Some(error.to_string());
             windows_window::quit();
             return;
