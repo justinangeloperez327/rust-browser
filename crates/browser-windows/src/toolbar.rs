@@ -3,8 +3,8 @@
 
 use windows_sys::Win32::Foundation::HWND;
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, GetWindowTextLengthW, GetWindowTextW, MoveWindow, SetWindowTextW,
-    WS_BORDER, WS_CHILD, WS_VISIBLE, ES_AUTOHSCROLL,
+    CreateWindowExW, ES_AUTOHSCROLL, GetWindowTextLengthW, GetWindowTextW, MoveWindow,
+    SetWindowTextW, WS_BORDER, WS_CHILD, WS_VISIBLE,
 };
 
 pub const HEIGHT: i32 = 44;
@@ -19,7 +19,13 @@ fn wide(input: &str) -> Vec<u16> {
     input.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
-fn child(parent: HWND, class: &str, title: &str, id: usize, style: u32) -> Result<HWND, &'static str> {
+fn child(
+    parent: HWND,
+    class: &str,
+    title: &str,
+    id: usize,
+    style: u32,
+) -> Result<HWND, &'static str> {
     let class = wide(class);
     let title = wide(title);
     // SAFETY: All UTF-16 inputs are terminated and parent must be a live HWND on this thread.
@@ -62,14 +68,25 @@ impl Toolbar {
             forward: child(parent, "BUTTON", "Forward", FORWARD, 0)?,
             reload: child(parent, "BUTTON", "Reload", RELOAD, 0)?,
             stop: child(parent, "BUTTON", "Stop", STOP, 0)?,
-            address: child(parent, "EDIT", initial_url, ADDRESS, WS_BORDER | ES_AUTOHSCROLL as u32)?,
+            address: child(
+                parent,
+                "EDIT",
+                initial_url,
+                ADDRESS,
+                WS_BORDER | ES_AUTOHSCROLL as u32,
+            )?,
             go: child(parent, "BUTTON", "Go", GO, 0)?,
         })
     }
 
     pub fn resize(&self, width: i32) {
         let mut left = 8;
-        for (hwnd, size) in [(self.back, 62), (self.forward, 74), (self.reload, 70), (self.stop, 58)] {
+        for (hwnd, size) in [
+            (self.back, 62),
+            (self.forward, 74),
+            (self.reload, 70),
+            (self.stop, 58),
+        ] {
             // SAFETY: HWNDs belong to the live parent; layout runs on the UI thread.
             unsafe { MoveWindow(hwnd, left, 8, size, 28, 1) };
             left += size + 5;
