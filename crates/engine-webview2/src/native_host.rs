@@ -71,7 +71,7 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
             if let Some(host) = resize_host.borrow().as_ref() {
                 let _ = host
                     .controller()
-                    .set_bounds(0, toolbar::HEIGHT, width, height);
+                    .set_bounds(0, toolbar::HEIGHT, width, height.max(toolbar::HEIGHT));
             }
         })
         .on_close(move || {
