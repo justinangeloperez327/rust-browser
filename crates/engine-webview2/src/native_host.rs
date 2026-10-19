@@ -55,10 +55,10 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 _ => None,
             };
             if let Some(command) = command {
-                if let Some(host) = event_host.borrow().as_ref() {
-                    if let Err(error) = super::dispatch_webview_command(host.webview(), command) {
-                        tracing::warn!(%error, "Toolbar navigation failed");
-                    }
+                if let Some(host) = event_host.borrow().as_ref()
+                    && let Err(error) = super::dispatch_webview_command(host.webview(), command)
+                {
+                    tracing::warn!(%error, "Toolbar navigation failed");
                 }
                 return Some(0);
             }
