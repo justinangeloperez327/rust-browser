@@ -63,7 +63,10 @@ pub fn resolve_address(input: &str) -> Result<String, AddressError> {
         && (input.contains('.') || input.eq_ignore_ascii_case("localhost"))
     {
         if let Ok(url) = Url::parse(&format!("https://{input}")) {
-            if matches!(url.host(), Some(Host::Domain(_)) | Some(Host::Ipv4(_)) | Some(Host::Ipv6(_))) {
+            if matches!(
+                url.host(),
+                Some(Host::Domain(_)) | Some(Host::Ipv4(_)) | Some(Host::Ipv6(_))
+            ) {
                 return validated_http(url);
             }
         }
@@ -79,7 +82,10 @@ mod tests {
 
     #[test]
     fn bare_domains_use_https() {
-        assert_eq!(resolve_address("example.com").unwrap(), "https://example.com/");
+        assert_eq!(
+            resolve_address("example.com").unwrap(),
+            "https://example.com/"
+        );
     }
 
     #[test]
@@ -100,15 +106,30 @@ mod tests {
 
     #[test]
     fn unsupported_schemes_are_rejected() {
-        assert_eq!(resolve_address("file:///etc/passwd"), Err(AddressError::UnsupportedScheme));
-        assert_eq!(resolve_address("javascript:alert(1)"), Err(AddressError::UnsupportedScheme));
-        assert_eq!(resolve_address("data:text/html,hello"), Err(AddressError::UnsupportedScheme));
+        assert_eq!(
+            resolve_address("file:///etc/passwd"),
+            Err(AddressError::UnsupportedScheme)
+        );
+        assert_eq!(
+            resolve_address("javascript:alert(1)"),
+            Err(AddressError::UnsupportedScheme)
+        );
+        assert_eq!(
+            resolve_address("data:text/html,hello"),
+            Err(AddressError::UnsupportedScheme)
+        );
     }
 
     #[test]
     fn malformed_http_urls_are_not_searches() {
-        assert_eq!(resolve_address("https:///"), Err(AddressError::UnsupportedScheme));
-        assert_eq!(resolve_address("https://"), Err(AddressError::UnsupportedScheme));
+        assert_eq!(
+            resolve_address("https:///"),
+            Err(AddressError::UnsupportedScheme)
+        );
+        assert_eq!(
+            resolve_address("https://"),
+            Err(AddressError::UnsupportedScheme)
+        );
     }
 
     #[test]
@@ -123,6 +144,10 @@ mod tests {
 
     #[test]
     fn input_with_spaces_becomes_search() {
-        assert!(resolve_address("best Rust browser").unwrap().contains("q=best+Rust+browser"));
+        assert!(
+            resolve_address("best Rust browser")
+                .unwrap()
+                .contains("q=best+Rust+browser")
+        );
     }
 }
