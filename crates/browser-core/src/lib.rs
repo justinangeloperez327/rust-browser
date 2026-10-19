@@ -107,4 +107,27 @@ mod tests {
         assert!(state.closed);
         assert!(!state.ready);
     }
+    #[test]
+    fn failed_navigation_sets_failure_state() {
+        let mut state = ViewState::default();
+        state.apply(BrowserEvent::Ready);
+        state.apply(BrowserEvent::NavigationCompleted {
+            url: "https://invalid.example".into(),
+            success: false,
+        });
+        assert!(state.failed);
+        assert!(!state.loading);
+    }
+
+    #[test]
+    fn title_updates_do_not_override_current_url() {
+        let mut state = ViewState::default();
+        state.apply(BrowserEvent::NavigationStarted {
+            url: "https://example.com".into(),
+        });
+        state.apply(BrowserEvent::TitleChanged("Example".into()));
+        assert_eq!(state.url.as_deref(), Some("https://example.com"));
+        assert_eq!(state.title.as_deref(), Some("Example"));
+    }
+
 }
