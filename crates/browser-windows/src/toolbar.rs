@@ -4,8 +4,8 @@
 use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows_sys::Win32::UI::Controls::{DefSubclassProc, SetWindowSubclass};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, ES_AUTOHSCROLL, GetWindowTextLengthW, GetWindowTextW, MoveWindow,
-    SetWindowTextW, GetParent, SendMessageW, SetFocus, EM_SETSEL, WS_BORDER, WS_CHILD, WS_VISIBLE,
+    CreateWindowExW, EM_SETSEL, ES_AUTOHSCROLL, GetParent, GetWindowTextLengthW, GetWindowTextW,
+    MoveWindow, SendMessageW, SetFocus, SetWindowTextW, WS_BORDER, WS_CHILD, WS_VISIBLE,
 };
 
 pub const HEIGHT: i32 = 44;
@@ -39,7 +39,6 @@ unsafe extern "system" fn address_key_handler(
     }
     unsafe { DefSubclassProc(hwnd, message, wparam, lparam) }
 }
-
 
 fn wide(input: &str) -> Vec<u16> {
     input.encode_utf16().chain(std::iter::once(0)).collect()

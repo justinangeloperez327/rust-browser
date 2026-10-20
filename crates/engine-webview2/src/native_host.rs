@@ -152,7 +152,9 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                     use windows_webview::KeyEventKind;
                     if matches!(args.key_event_kind(), KeyEventKind::KeyDown)
                         && args.virtual_key() == 0x4C
-                        && unsafe { windows_sys::Win32::UI::Input::KeyboardAndMouse::GetKeyState(0x11) } < 0
+                        && unsafe {
+                            windows_sys::Win32::UI::Input::KeyboardAndMouse::GetKeyState(0x11)
+                        } < 0
                     {
                         if let Some(controls) = shortcut_toolbar.borrow().as_ref() {
                             controls.focus_address();
