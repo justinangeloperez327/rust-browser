@@ -7,7 +7,7 @@ license.workspace = true
 [target.'cfg(windows)'.dependencies]
 windows-webview = { git = "https://github.com/microsoft/windows-rs", package = "windows-webview", features = ["system"] }
 windows-window = { git = "https://github.com/microsoft/windows-rs", package = "windows-window" }
-windows-sys = { version = "0.61", features = ["Win32_System_Com"] }
+windows-sys = { version = "0.61", features = ["Win32_System_Com", "Win32_UI_Input_KeyboardAndMouse"] }
 
 [dependencies]
 tracing = "0.1"

@@ -1,10 +1,11 @@
 //! Native Win32 navigation toolbar attached to a parent browser window.
 #![allow(unsafe_code)]
 
-use windows_sys::Win32::Foundation::HWND;
+use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows_sys::Win32::UI::Controls::{DefSubclassProc, SetWindowSubclass};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, ES_AUTOHSCROLL, GetWindowTextLengthW, GetWindowTextW, MoveWindow,
-    SetWindowTextW, WS_BORDER, WS_CHILD, WS_VISIBLE,
+    SetWindowTextW, GetParent, SendMessageW, SetFocus, EM_SETSEL, WS_BORDER, WS_CHILD, WS_VISIBLE,
 };
 
 pub const HEIGHT: i32 = 44;
@@ -14,6 +15,31 @@ pub const RELOAD: usize = 103;
 pub const STOP: usize = 104;
 pub const ADDRESS: usize = 105;
 pub const GO: usize = 106;
+
+const WM_KEYDOWN: u32 = 0x0100;
+const VK_RETURN: usize = 0x0D;
+const WM_COMMAND: u32 = 0x0111;
+
+unsafe extern "system" fn address_key_handler(
+    hwnd: HWND,
+    message: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+    _subclass_id: usize,
+    _ref_data: usize,
+) -> LRESULT {
+    if message == WM_KEYDOWN && wparam == VK_RETURN {
+        // SAFETY: This control belongs to its parent HWND, and messages are
+        // dispatched synchronously on the owning UI thread.
+        let parent = unsafe { GetParent(hwnd) };
+        if !parent.is_null() {
+            unsafe { SendMessageW(parent, WM_COMMAND, GO, 0) };
+        }
+        return 0;
+    }
+    unsafe { DefSubclassProc(hwnd, message, wparam, lparam) }
+}
+
 
 fn wide(input: &str) -> Vec<u16> {
     input.encode_utf16().chain(std::iter::once(0)).collect()
@@ -63,18 +89,23 @@ pub struct Toolbar {
 
 impl Toolbar {
     pub fn new(parent: HWND, initial_url: &str) -> Result<Self, &'static str> {
+        let address = child(
+            parent,
+            "EDIT",
+            initial_url,
+            ADDRESS,
+            WS_BORDER | ES_AUTOHSCROLL as u32,
+        )?;
+        // SAFETY: The callback has a static lifetime and does not capture state.
+        if unsafe { SetWindowSubclass(address, Some(address_key_handler), ADDRESS, 0) } == 0 {
+            return Err("failed to attach address Enter-key handler");
+        }
         Ok(Self {
             back: child(parent, "BUTTON", "Back", BACK, 0)?,
             forward: child(parent, "BUTTON", "Forward", FORWARD, 0)?,
             reload: child(parent, "BUTTON", "Reload", RELOAD, 0)?,
             stop: child(parent, "BUTTON", "Stop", STOP, 0)?,
-            address: child(
-                parent,
-                "EDIT",
-                initial_url,
-                ADDRESS,
-                WS_BORDER | ES_AUTOHSCROLL as u32,
-            )?,
+            address,
             go: child(parent, "BUTTON", "Go", GO, 0)?,
         })
     }
@@ -97,6 +128,14 @@ impl Toolbar {
         unsafe {
             MoveWindow(self.address, left, 8, address_width, 28, 1);
             MoveWindow(self.go, left + address_width + 5, 8, go_width, 28, 1);
+        }
+    }
+
+    pub fn focus_address(&self) {
+        // SAFETY: The edit HWND remains owned by the current live browser window.
+        unsafe {
+            SetFocus(self.address);
+            SendMessageW(self.address, EM_SETSEL, 0, -1);
         }
     }
 

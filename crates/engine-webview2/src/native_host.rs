@@ -94,6 +94,7 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     let target = start_url.to_owned();
     let created_host = Rc::clone(&host);
     let completed_toolbar = Rc::clone(&toolbar);
+    let shortcut_toolbar = Rc::clone(&toolbar);
     windows_webview::WebViewHost::builder()
         .create_for_hwnd(window.hwnd(), move |result| {
             let instance = match result {
@@ -149,6 +150,16 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 .controller()
                 .on_accelerator_key_pressed(move |args| {
                     use windows_webview::KeyEventKind;
+                    if matches!(args.key_event_kind(), KeyEventKind::KeyDown)
+                        && args.virtual_key() == 0x4C
+                        && unsafe { windows_sys::Win32::UI::Input::KeyboardAndMouse::GetKeyState(0x11) } < 0
+                    {
+                        if let Some(controls) = shortcut_toolbar.borrow().as_ref() {
+                            controls.focus_address();
+                        }
+                        let _ = args.set_handled(true);
+                        return;
+                    }
                     let command = match (args.key_event_kind(), args.virtual_key()) {
                         (KeyEventKind::KeyDown, 0x74) => Some(BrowserCommand::Reload),
                         (KeyEventKind::KeyDown, 0x1B) => Some(BrowserCommand::Stop),
