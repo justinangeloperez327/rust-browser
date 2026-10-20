@@ -121,14 +121,15 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 return;
             }
             let completed_view = view.clone();
+            let navigation_toolbar = Rc::clone(&completed_toolbar);
             let title_view = view.clone();
             let registrations = [
                 view.on_navigation_completed(move |args| {
-                    tracing::info!(
-                        url = %completed_view.source(),
-                        success = args.is_success(),
-                        "Navigation completed"
-                    );
+                    let url = completed_view.source();
+                    if let Some(controls) = navigation_toolbar.borrow().as_ref() {
+                        controls.set_address(&url);
+                    }
+                    tracing::info!(url = %url, success = args.is_success(), "Navigation completed");
                 }),
                 view.on_document_title_changed(move |title| {
                     tracing::info!(%title, "Page title changed");
