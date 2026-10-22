@@ -2,7 +2,7 @@
 #![allow(unsafe_code)]
 
 use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-use windows_sys::Win32::UI::Input::KeyboardAndMouse::SetFocus;
+use windows_sys::Win32::UI::Input::KeyboardAndMouse::{GetFocus, SetFocus};
 
 #[link(name = "comctl32")]
 unsafe extern "system" {
@@ -160,6 +160,14 @@ impl Toolbar {
             let mut buffer = vec![0u16; (size + 1) as usize];
             let copied = GetWindowTextW(self.address, buffer.as_mut_ptr(), size + 1);
             String::from_utf16_lossy(&buffer[..copied as usize])
+        }
+    }
+
+    /// Do not overwrite a URL or search that the user is currently editing.
+    pub fn sync_address(&self, url: &str) {
+        // SAFETY: All window handles belong to the current UI thread.
+        if unsafe { GetFocus() } != self.address {
+            self.set_address(url);
         }
     }
 

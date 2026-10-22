@@ -128,7 +128,7 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                 view.on_navigation_completed(move |args| {
                     let url = completed_view.source();
                     if let Some(controls) = navigation_toolbar.borrow().as_ref() {
-                        controls.set_address(&url);
+                        controls.sync_address(&url);
                     }
                     tracing::info!(url = %url, success = args.is_success(), "Navigation completed");
                 }),
