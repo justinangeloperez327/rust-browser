@@ -9,7 +9,9 @@ unsafe extern "system" {
     fn DefSubclassProc(hwnd: HWND, message: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT;
     fn SetWindowSubclass(
         hwnd: HWND,
-        callback: Option<unsafe extern "system" fn(HWND, u32, WPARAM, LPARAM, usize, usize) -> LRESULT>,
+        callback: Option<
+            unsafe extern "system" fn(HWND, u32, WPARAM, LPARAM, usize, usize) -> LRESULT,
+        >,
         subclass_id: usize,
         reference_data: usize,
     ) -> i32;
@@ -17,8 +19,8 @@ unsafe extern "system" {
 
 const EM_SETSEL: u32 = 0x00B1;
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, ES_AUTOHSCROLL, GetParent, GetWindowTextLengthW, GetWindowTextW,
-    MoveWindow, SendMessageW, SetWindowTextW, WS_BORDER, WS_CHILD, WS_VISIBLE,
+    CreateWindowExW, ES_AUTOHSCROLL, GetParent, GetWindowTextLengthW, GetWindowTextW, MoveWindow,
+    SendMessageW, SetWindowTextW, WS_BORDER, WS_CHILD, WS_VISIBLE,
 };
 
 pub const HEIGHT: i32 = 44;
