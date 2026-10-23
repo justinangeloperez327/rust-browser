@@ -26,6 +26,7 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     let toolbar = Rc::new(RefCell::new(None::<Toolbar>));
     let event_host = Rc::clone(&host);
     let resize_host = Rc::clone(&host);
+    let move_host = Rc::clone(&host);
     let resize_toolbar = Rc::clone(&toolbar);
     let button_toolbar = Rc::clone(&toolbar);
     let close_host = Rc::clone(&host);
@@ -75,6 +76,13 @@ fn run_sta(start_url: &str) -> Result<(), Box<dyn std::error::Error>> {
                     width,
                     height.max(toolbar::HEIGHT),
                 );
+            }
+        })
+        .on_move(move || {
+            if let Some(host) = move_host.borrow().as_ref()
+                && let Err(error) = host.controller().notify_parent_window_position_changed()
+            {
+                tracing::warn!(%error, "WebView2 parent window move notification failed");
             }
         })
         .on_close(move || {
