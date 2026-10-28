@@ -2,9 +2,11 @@
 
 The Windows CI pipeline verifies formatting, compilation, linting, tests, and the release build. It does **not** exercise a live WebView2 window or native input controls.
 
-On a Windows 10/11 machine with the Microsoft Edge WebView2 Runtime installed:
+On a Windows 10/11 machine with the Microsoft Edge WebView2 Runtime installed, download the `rust-browser-windows-<commit>` artifact from a successful run under **GitHub Actions → CI → Artifacts**, extract it, and launch `rust-browser.exe`. The artifact is an unsigned testing build, **not an installer**. You can also run `cargo run -p rust-browser` from source if Rust is installed.
 
-1. Run `cargo run -p rust-browser`. Confirm the toolbar is above the webpage, not overlaying it.
+Manual checks:
+
+1. Launch the browser. Confirm the toolbar is above the webpage, not overlaying it.
 2. Type `https://example.com` in the address bar and press Enter. Confirm navigation.
 3. Use Ctrl+L to select the address, type another valid URL or search phrase, and press Enter. Check the target is correctly resolved.
 4. Navigate through two or three pages. Test Back and Forward buttons as well as Alt+Left and Alt+Right.
